@@ -1,0 +1,10 @@
+/datasets/store/processed/train/*
+/datasets/store/processed/validation/*
+
+/datasets/store/raw/train/*
+/datasets/store/raw/validation/*
+
+/model/logs/*
+/model/results/*
+
+/test/*
