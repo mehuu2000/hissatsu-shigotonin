@@ -1,41 +1,56 @@
 import torch
 from transformers import BertForSequenceClassification, AutoTokenizer
+import os
 
-# モデルを保存したディレクトリを指定
-model_dir = "../model/results/checkpoint-6250"
+# --- モデルとトークナイザーのロード ---
+# train.pyで保存した最終モデルのディレクトリを指定
+model_dir = "../model/final_model"
+
+if not os.path.exists(model_dir):
+    print(f"エラー: '{model_dir}' ディレクトリが見つかりません。train.py を実行してモデルを保存してください。")
+    exit()
 
 # モデルとトークナイザーをロード
+# from_pretrained()は、ディレクトリ内のすべての関連ファイルを自動で読み込みます
 loaded_model = BertForSequenceClassification.from_pretrained(model_dir)
 tokenizer = AutoTokenizer.from_pretrained(model_dir)
 
-# GPU/CPU設定
+# GPUが利用可能ならモデルをGPUに移動
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 loaded_model.to(device)
-loaded_model.eval()
+loaded_model.eval() # 推論モードに設定
 
-# モデルの予測関数を定義
+print("モデルとトークナイザーのロードが完了しました。\n")
+
+# --- 予測関数の定義 ---
 def predict_review_sentiment(review_text):
-    # テキストをトークン化
-    inputs = tokenizer(review_text, return_tensors="pt", truncation=True, padding=True)
-
-    # デバイスに移動
+    # テキストをトークン化し、モデルの入力形式に変換
+    inputs = tokenizer(review_text, return_tensors="pt", truncation=True, padding=True, max_length=512)
+    
+    # データをGPUに移動
     inputs = {k: v.to(device) for k, v in inputs.items()}
     
-    # モデルにデータを渡し、予測結果を取得
+    # 勾配計算を無効化し、予測を実行
     with torch.no_grad():
         outputs = loaded_model(**inputs)
         
-    # ロジット（生の予測スコア）から最も高いスコアを持つクラスを特定
+    # ロジットから最も高いスコアを持つクラスIDを取得
     predicted_class_id = outputs.logits.argmax().item()
     
-    # ラベルは0から始まるため、+1して星評価に変換
+    # クラスIDは0から始まるため、+1して星評価に変換
     predicted_star_rating = predicted_class_id + 1
     
     return predicted_star_rating
 
-# 新しいレビューで予測を試す
-review = input("レビューを入力してください: ")
-predicted_rating = predict_review_sentiment(review)
-
-print(f"レビュー: '{review}'")
-print(f"予測された星評価: {predicted_rating}つ星")
+# --- 予測の実行 ---
+print("レビューを入力してください ('exit'で終了):")
+while True:
+    review = input("> ")
+    if review.lower() == 'exit':
+        break
+    
+    predicted_rating = predict_review_sentiment(review)
+    
+    # print(f"レビュー: '{review}'")
+    print("\n\n")
+    print(f"予測された星評価: {predicted_rating}つ星\n")

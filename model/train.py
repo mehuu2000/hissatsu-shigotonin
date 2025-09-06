@@ -1,5 +1,5 @@
 import os 
-from datasets import load_from_disk
+from datasets import load_from_disk, concatenate_datasets
 from transformers import AutoTokenizer, BertForSequenceClassification, TrainingArguments, Trainer
 import torch
 import numpy as np
@@ -9,16 +9,25 @@ from sklearn.metrics import confusion_matrix, accuracy_score, f1_score
 datasets_path = "../datasets/store/processed"
 amazon_train_path = os.path.join(datasets_path, "train", "amazon")
 amazon_validation_path = os.path.join(datasets_path, "validation", "amazon")
+google_play_train_path = os.path.join(datasets_path, "train", "google_play")
+google_play_validation_path = os.path.join(datasets_path, "validation", "google_play")
 
 # データセット読み込み
 print("データセットを読み込み中...")
 amazon_train_dataset = load_from_disk(amazon_train_path)
 amazon_validation_dataset = load_from_disk(amazon_validation_path)
+google_play_train_dataset = load_from_disk(google_play_train_path)
+google_play_validation_dataset = load_from_disk(google_play_validation_path)
 print("データセットの読み込みが完了しました。\n")
 
-print(f"訓練データの数: {len(amazon_train_dataset)}")
-print(f"検証データの数: {len(amazon_validation_dataset)}")
-print(f"訓練データの例: {amazon_train_dataset[0]}\n")
+# データセットを結合
+print("データセットを結合中...")
+combined_train_dataset = concatenate_datasets([amazon_train_dataset, google_play_train_dataset])
+combined_validation_dataset = concatenate_datasets([amazon_validation_dataset, google_play_validation_dataset])
+print("データセットの結合が完了しました。\n")
+
+print(f"訓練データの数: {len(combined_train_dataset)}")
+print(f"検証データの数: {len(combined_validation_dataset)}")
 
 # モデルのロード
 print("モデルをロード中...")
@@ -67,8 +76,8 @@ def compute_metrics(eval_pred):
 trainer = Trainer(
     args = args,
     model = model,
-    train_dataset = amazon_train_dataset,
-    eval_dataset = amazon_validation_dataset,
+    train_dataset = combined_train_dataset,
+    eval_dataset = combined_validation_dataset,
     compute_metrics = compute_metrics,
 )
 
@@ -84,9 +93,9 @@ print("評価結果:\n, ", metrics)
 
 # 混同行列の作成と表示
 print("\n混同行列を生成中...\n")
-predictions = trainer.predict(amazon_validation_dataset)
+predictions = trainer.predict(combined_validation_dataset)
 predicted_labels = np.argmax(predictions.predictions, axis=1)
-true_labels = amazon_validation_dataset['label']
+true_labels = combined_validation_dataset['label']
 
 cm = confusion_matrix(true_labels, predicted_labels)
 print("混同行列:\n", cm)
