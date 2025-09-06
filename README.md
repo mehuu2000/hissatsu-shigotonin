@@ -40,11 +40,9 @@ make run
 ```
 
 (1, 2, 3, 4が面倒くさいと思う人)
-(
 ```
 make all
 ```
-)
 
 ## 利用データセット
 ### messengers-reviews-google-play
