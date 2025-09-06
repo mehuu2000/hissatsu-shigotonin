@@ -8,7 +8,7 @@ from datasets import load_from_disk, load_dataset, ClassLabel
 from transformers import AutoTokenizer
 import random
 
-isUpdate = True  # データセットを再ダウンロードする場合はTrueに設定
+isUpdate = False  # データセットを再ダウンロードする場合はTrueに設定
 
 # データセット情報を定義
 datasets_name = "UniqueData/messengers-reviews-google-play"
