@@ -51,6 +51,5 @@ while True:
     
     predicted_rating = predict_review_sentiment(review)
     
-    # print(f"レビュー: '{review}'")
     print("\n\n")
     print(f"予測された星評価: {predicted_rating}つ星\n")

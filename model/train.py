@@ -7,8 +7,10 @@ from sklearn.metrics import confusion_matrix, accuracy_score, f1_score
 
 # データセットのパスを定義
 datasets_path = "../datasets/store/processed"
+
 amazon_train_path = os.path.join(datasets_path, "train", "amazon")
 amazon_validation_path = os.path.join(datasets_path, "validation", "amazon")
+
 google_play_train_path = os.path.join(datasets_path, "train", "google_play")
 google_play_validation_path = os.path.join(datasets_path, "validation", "google_play")
 
@@ -31,7 +33,7 @@ print(f"検証データの数: {len(combined_validation_dataset)}")
 
 # モデルのロード
 print("モデルをロード中...")
-model_name = "cl-tohoku/bert-base-japanese-v2"
+model_name = "xlm-roberta-base"
 num_labels = 5 # 星評価1〜5
 
 model = BertForSequenceClassification.from_pretrained(model_name, num_labels=num_labels)
@@ -44,9 +46,9 @@ print(f"モデルは {device} で動作します。\n")
 # 学習引数の設定
 args = TrainingArguments(
     output_dir="./results",           # 学習結果（モデルの重みなど）の保存先
-    num_train_epochs=1,               # 訓練エポック数
+    num_train_epochs=2,               # 訓練エポック数
     per_device_train_batch_size=32,   # 訓練バッチサイズ(一度に処理するデータ数)
-    per_device_eval_batch_size=32,    # 評価バッチサイズ(一度に処理するデータ数)
+    per_device_eval_batch_size=48,    # 評価バッチサイズ(一度に処理するデータ数)
     warmup_steps=500,                 # 学習率のウォームアップステップ数
     weight_decay=0.01,                # 正則化
     logging_dir='./logs',             # ログの保存先
@@ -55,8 +57,9 @@ args = TrainingArguments(
     save_strategy="epoch",            # エポックごとにモデルを保存
     load_best_model_at_end=True,      # 学習終了時に最良モデルをロード
     metric_for_best_model="accuracy", # 最良モデルの基準とする指標
-    fp16=torch.cuda.is_available(),   # 混合精度学習の有効化
-    dataloader_num_workers=4,         # データローダーのワーカースレッド数
+    fp16=False,                       # 混合精度学習の有効化
+    bf16=torch.cuda.is_available(),   # bf16の有効化(A100などで利用可能)
+    dataloader_num_workers=8,         # データローダーのワーカースレッド数
 )
 
 # 評価指標の計算関数を定義
@@ -107,10 +110,11 @@ model_save_path = "./final_model"
 print(f"\n最終モデルを '{model_save_path}' に保存中...")
 
 if not os.path.exists(model_save_path):
-    os.makedirs(model_save_path)
+    os.makedirs(model_save_path, exist_ok=True)
 
+# トークナイザーが必要なのでロード
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 trainer.save_model(model_save_path)
 tokenizer.save_pretrained(model_save_path)
-print("最終モデルとトークナイザーが'{model_save_path}'に保存されました。")
+print(f"最終モデルとトークナイザーが'{model_save_path}'に保存されました。")

@@ -59,7 +59,6 @@ if is_dir_empty(train_path) or is_dir_empty(validation_path) or isUpdate:
             remove_columns = columns_remove(dataset)
         )
        
-        print(f"前処理後のデータセット数: {len(dataset)}")
         print(f"前処理後の利用可能な列: {dataset.column_names}\n")
        
         # ラベル列をClassLabel型に変換（層化分割のため）(今回は検証データがないので、ClassLabelに変換してから分割する)
@@ -89,7 +88,7 @@ if is_dir_empty(train_path) or is_dir_empty(validation_path) or isUpdate:
         print(f"データセットを'{train_path}'と'{validation_path}'に保存中...")
         train_dataset.save_to_disk(train_path)
         validation_dataset.save_to_disk(validation_path)
-        print(f"'{datasets_name}'が")
+        print(f"\n'{datasets_name}'が")
         print(f"'{train_path}'と")
         print(f"'{validation_path}'に保存されました。\n")
 
@@ -155,7 +154,7 @@ print(f"サンプリング後 - 訓練データ： {len(train_dataset)}, 検証�
 
 # トークナイザーのロード
 print("トークナイザーをロード中...")
-model_name = "cl-tohoku/bert-base-japanese-v2"
+model_name = "xlm-roberta-base"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 max_length = tokenizer.model_max_length
 if max_length > 1024:
@@ -176,7 +175,7 @@ print("データセットのトークン化が完了しました。\n")
 print("不要なtext列を削除中...")
 tokenized_train_dataset = tokenized_train_dataset.remove_columns(['text'])
 tokenized_validation_dataset = tokenized_validation_dataset.remove_columns(['text'])
-print("不要なtext列を削除\n")
+print("不要なtext列の削除が完了\n")
 
 # 前処理が完了したデータセットを保存
 print(f"前処理が完了したデータセットを'{processed_dataset_path}'に保存中...")
