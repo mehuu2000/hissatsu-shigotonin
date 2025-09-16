@@ -2,13 +2,22 @@ import torch
 from transformers import BertForSequenceClassification, AutoTokenizer
 import os
 
-# --- モデルとトークナイザーのロード ---
+# モデルとトークナイザーのロード
 # train.pyで保存した最終モデルのディレクトリを指定
 model_dir = "../model/final_model"
 
-if not os.path.exists(model_dir):
-    print(f"エラー: '{model_dir}' ディレクトリが見つかりません。train.py を実行してモデルを保存してください。")
-    exit()
+# ディレクトリが空かどうかを確認する関数
+def is_dir_empty(path):
+    if not os.path.exists(path):
+        return True
+    with os.scandir(path) as it:
+        if any(it):
+            return False
+    return True
+
+if is_dir_empty(model_dir):
+    print(f"エラー: '{model_dir}' モデルが見つかりません。train.py を実行してモデルを作成・保存してください。")
+    exit(1)
 
 # モデルとトークナイザーをロード
 # from_pretrained()は、ディレクトリ内のすべての関連ファイルを自動で読み込みます
@@ -28,7 +37,10 @@ def predict_review_sentiment(review_text):
     inputs = tokenizer(review_text, return_tensors="pt", truncation=True, padding=True, max_length=512)
     
     # データをGPUに移動
-    inputs = {k: v.to(device) for k, v in inputs.items()}
+    new_inputs = {}
+    for k, v in inputs.items():
+        new_inputs[k] = v.to(device)
+    inputs = new_inputs
     
     # 勾配計算を無効化し、予測を実行
     with torch.no_grad():

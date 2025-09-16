@@ -3,7 +3,7 @@ from datasets import load_from_disk, load_dataset, ClassLabel
 from transformers import AutoTokenizer
 import random
 
-isUpdate = True  # データセットを再ダウンロードする場合はTrueに設定
+isUpdate = False  # データセットを再ダウンロードする場合はTrueに設定
 
 # ディレクトリが空かどうかを確認する関数
 def is_dir_empty(path):
