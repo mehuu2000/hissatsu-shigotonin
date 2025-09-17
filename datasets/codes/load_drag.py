@@ -15,10 +15,10 @@ def is_dir_empty(path):
     return True
 
 # データセットの基本情報を定義
-datasets_name = "SetFit/amazon_reviews_multi_ja"
+datasets_name = "Mouwiya/drug-reviews"
 raw_dataset_path = "../store/raw"
 processed_dataset_path = "../store/processed"
-Nickname = "amazon"
+Nickname = "drug"
 
 # データセットの保存先パスを定義
 train_path = os.path.join(raw_dataset_path, "train", Nickname)
@@ -26,6 +26,20 @@ validation_path = os.path.join(raw_dataset_path, "validation", Nickname)
 
 tokenized_train_path = os.path.join(processed_dataset_path, "train", Nickname)
 tokenized_validation_path = os.path.join(processed_dataset_path, "validation", Nickname)
+
+# 10段階→5段階評価の変換関数
+def convert_10_to_5_scale(rating):
+    """10段階評価を5段階評価（0-4）に変換"""
+    if rating <= 2:
+        return 0  # 1-2 → 0
+    elif rating <= 4:
+        return 1  # 3-4 → 1
+    elif rating <= 6:
+        return 2  # 5-6 → 2
+    elif rating <= 8:
+        return 3  # 7-8 → 3
+    else:
+        return 4  # 9-10 → 4
 
 # 削除する不要な列を定義
 def columns_remove(dataset):
@@ -41,29 +55,53 @@ def columns_remove(dataset):
 if is_dir_empty(train_path) or is_dir_empty(validation_path) or isUpdate:
     try:
         print(f"'{datasets_name}'をダウンロード中...\n")
-        # train, validationのデータセットをロード
-        train_dataset = load_dataset(datasets_name, split="train")
-        validation_dataset = load_dataset(datasets_name, split="validation")
+        # trainデータセットをロード
+        dataset = load_dataset(datasets_name, split="train")
         
-        print(f"訓練データセット数: {len(train_dataset)}")
-        print(f"検証データセット数: {len(validation_dataset)}")
+        print(f"データセット数: {len(dataset)}")
+        print(f"利用可能な列: {dataset.column_names}\n")
+
+        # 列名を変更（review → text, rating → label）
+        print("列名を変更中...")
+        dataset = dataset.rename_column('review', 'text')
+        dataset = dataset.rename_column('rating', 'label')
+        print("review → text, rating → label に変更しました。")
+
+        # ラベルを10段階から5段階に変換
+        print("ラベルを10段階から5段階（0-4）に変換中...")
+        def convert_labels(example):
+            example['label'] = convert_10_to_5_scale(int(example['label']))
+            return example
+        
+        dataset = dataset.map(convert_labels)
+        print("ラベル変換が完了しました。")
 
         # 不要な列を削除
-        columns_to_remove = columns_remove(train_dataset)
+        columns_to_remove = columns_remove(dataset)
         if columns_to_remove:
-            train_dataset = train_dataset.remove_columns(columns_to_remove)
-            validation_dataset = validation_dataset.remove_columns(columns_to_remove)
+            dataset = dataset.remove_columns(columns_to_remove)
             print(f"削除した列: {columns_to_remove}")
 
-        print(f"前処理後の利用可能な列: {train_dataset.column_names}\n")
+        print(f"前処理後の利用可能な列: {dataset.column_names}\n")
 
-        # ラベル列をClassLabel型に変換
+        # ラベル列をClassLabel型に変換（層化分割のため）
         try:
-            train_dataset = train_dataset.cast_column('label', ClassLabel(num_classes=5, names=['0', '1', '2', '3', '4']))
-            validation_dataset = validation_dataset.cast_column('label', ClassLabel(num_classes=5, names=['0', '1', '2', '3', '4']))
-            print("ラベル列をClassLabel型に変換しました。\n")
+            dataset = dataset.cast_column('label', ClassLabel(num_classes=5, names=['0', '1', '2', '3', '4']))
+            print("ラベル列をClassLabel型に変換しました。")
+           
+            # データセットを訓練用と検証用に分割（90:10）層化分割
+            dataset_split = dataset.train_test_split(test_size=0.1, seed=42, stratify_by_column='label')
+            print("層化分割でデータセットを分割しました。\n")
         except Exception as e:
-            print(f"ClassLabel変換でエラーが発生: {e}\n")
+            print(f"層化分割でエラーが発生: {e}")
+            # 層化分割なしで分割
+            dataset_split = dataset.train_test_split(test_size=0.1, seed=42)
+            print("通常分割でデータセットを分割しました。\n")
+
+        train_dataset = dataset_split['train']
+        validation_dataset = dataset_split['test']
+       
+        print(f"分割後 - 訓練データ: {len(train_dataset)}, 検証データ: {len(validation_dataset)}\n")
 
         os.makedirs(os.path.dirname(train_path), exist_ok=True)
         os.makedirs(os.path.dirname(validation_path), exist_ok=True)

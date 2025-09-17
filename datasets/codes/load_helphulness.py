@@ -15,10 +15,10 @@ def is_dir_empty(path):
     return True
 
 # データセットの基本情報を定義
-datasets_name = "SetFit/amazon_reviews_multi_ja"
+datasets_name = "tafseer-nayeem/review_helpfulness_prediction"
 raw_dataset_path = "../store/raw"
 processed_dataset_path = "../store/processed"
-Nickname = "amazon"
+Nickname = "helpfulness"
 
 # データセットの保存先パスを定義
 train_path = os.path.join(raw_dataset_path, "train", Nickname)
@@ -47,6 +47,15 @@ if is_dir_empty(train_path) or is_dir_empty(validation_path) or isUpdate:
         
         print(f"訓練データセット数: {len(train_dataset)}")
         print(f"検証データセット数: {len(validation_dataset)}")
+        print(f"利用可能な列: {train_dataset.column_names}\n")
+
+        # 列名を変更（review_text → text, helpful_class → label）
+        print("列名を変更中...")
+        train_dataset = train_dataset.rename_column('review_text', 'text')
+        train_dataset = train_dataset.rename_column('helpful_class', 'label')
+        validation_dataset = validation_dataset.rename_column('review_text', 'text')
+        validation_dataset = validation_dataset.rename_column('helpful_class', 'label')
+        print("review_text → text, helpful_class → label に変更しました。")
 
         # 不要な列を削除
         columns_to_remove = columns_remove(train_dataset)
@@ -96,14 +105,14 @@ label_counts_train = {}
 for label in train_dataset['label']:
     label_counts_train[label] = label_counts_train.get(label, 0) + 1
 for label in sorted(label_counts_train.keys()):
-    print(f"ラベル {label} ({label+1}つ星): {label_counts_train[label]}件")
+    print(f"ラベル {label} ({label+1}段階): {label_counts_train[label]}件")
 
 print("\n検証データのラベル分布:")
 label_counts_val = {}
 for label in validation_dataset['label']:
     label_counts_val[label] = label_counts_val.get(label, 0) + 1
 for label in sorted(label_counts_val.keys()):
-    print(f"ラベル {label} ({label+1}つ星): {label_counts_val[label]}件")
+    print(f"ラベル {label} ({label+1}段階): {label_counts_val[label]}件")
 
 # labelの0-4でそれぞれ均等にサンプリング（オプション）
 sampled_train_indices = []
@@ -183,11 +192,11 @@ final_label_counts_train = {}
 for label in tokenized_train_dataset['label']:
     final_label_counts_train[label] = final_label_counts_train.get(label, 0) + 1
 for label in sorted(final_label_counts_train.keys()):
-    print(f"ラベル {label} ({label+1}つ星): {final_label_counts_train[label]}件")
+    print(f"ラベル {label} ({label+1}段階): {final_label_counts_train[label]}件")
 
 print("\n最終的な検証データのラベル分布:")
 final_label_counts_val = {}
 for label in tokenized_validation_dataset['label']:
     final_label_counts_val[label] = final_label_counts_val.get(label, 0) + 1
 for label in sorted(final_label_counts_val.keys()):
-    print(f"ラベル {label} ({label+1}つ星): {final_label_counts_val[label]}件")
+    print(f"ラベル {label} ({label+1}段階): {final_label_counts_val[label]}件")
