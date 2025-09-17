@@ -15,10 +15,10 @@ def is_dir_empty(path):
     return True
 
 # データセットの基本情報を定義
-datasets_name = "SetFit/amazon_reviews_multi_ja"
+datasets_name = "Yelp/yelp_review_full"
 raw_dataset_path = "../store/raw"
 processed_dataset_path = "../store/processed"
-Nickname = "amazon"
+Nickname = "yelp"
 
 # データセットの保存先パスを定義
 train_path = os.path.join(raw_dataset_path, "train", Nickname)
@@ -41,12 +41,13 @@ def columns_remove(dataset):
 if is_dir_empty(train_path) or is_dir_empty(validation_path) or isUpdate:
     try:
         print(f"'{datasets_name}'をダウンロード中...\n")
-        # train, validationのデータセットをロード
+        # train, testのデータセットをロード（testをvalidationとして使用）
         train_dataset = load_dataset(datasets_name, split="train")
-        validation_dataset = load_dataset(datasets_name, split="validation")
+        validation_dataset = load_dataset(datasets_name, split="test")
         
         print(f"訓練データセット数: {len(train_dataset)}")
         print(f"検証データセット数: {len(validation_dataset)}")
+        print(f"利用可能な列: {train_dataset.column_names}\n")
 
         # 不要な列を削除
         columns_to_remove = columns_remove(train_dataset)
@@ -73,8 +74,9 @@ if is_dir_empty(train_path) or is_dir_empty(validation_path) or isUpdate:
         train_dataset.save_to_disk(train_path)
         validation_dataset.save_to_disk(validation_path)
         print(f"\n'{datasets_name}'が")
-        print(f"'{train_path}'と")
-        print(f"'{validation_path}'に保存されました。\n")
+        print(train_path)
+        print(validation_path)
+        print("に保存されました。\n")
 
     except Exception as e:
         print(f"データセットのダウンロード中にエラーが発生しました: {e}\n")
@@ -160,6 +162,7 @@ print("不要なtext列を削除中...")
 tokenized_train_dataset = tokenized_train_dataset.remove_columns(['text'])
 tokenized_validation_dataset = tokenized_validation_dataset.remove_columns(['text'])
 print("不要なtext列の削除が完了\n")
+print(f"トークナイズ後の利用可能な列: {tokenized_train_dataset.column_names}\n")
 
 # 前処理が完了したデータセットを保存
 print(f"前処理が完了したデータセットを'{processed_dataset_path}'に保存中...")

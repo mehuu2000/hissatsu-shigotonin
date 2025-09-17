@@ -14,18 +14,45 @@ amazon_validation_path = os.path.join(datasets_path, "validation", "amazon")
 google_play_train_path = os.path.join(datasets_path, "train", "google_play")
 google_play_validation_path = os.path.join(datasets_path, "validation", "google_play")
 
+yelp_train_path = os.path.join(datasets_path, "train", "yelp")
+yelp_validation_path = os.path.join(datasets_path, "validation", "yelp")
+
+helpfulness_train_path = os.path.join(datasets_path, "train", "helpfulness")
+helpfulness_validation_path = os.path.join(datasets_path, "validation", "helpfulness")
+
+drag_train_path = os.path.join(datasets_path, "train", "drug")
+drag_validation_path = os.path.join(datasets_path, "validation", "drug")
+
 # データセット読み込み
 print("データセットを読み込み中...")
 amazon_train_dataset = load_from_disk(amazon_train_path)
 amazon_validation_dataset = load_from_disk(amazon_validation_path)
 google_play_train_dataset = load_from_disk(google_play_train_path)
 google_play_validation_dataset = load_from_disk(google_play_validation_path)
+yelp_train_dataset = load_from_disk(yelp_train_path)
+yelp_validation_dataset = load_from_disk(yelp_validation_path)
+helpfulness_train_dataset = load_from_disk(helpfulness_train_path)
+helpfulness_validation_dataset = load_from_disk(helpfulness_validation_path)
+drag_train_dataset = load_from_disk(drag_train_path)
+drag_validation_dataset = load_from_disk(drag_validation_path)
 print("データセットの読み込みが完了しました。\n")
 
 # データセットを結合
 print("データセットを結合中...")
-combined_train_dataset = concatenate_datasets([amazon_train_dataset, google_play_train_dataset])
-combined_validation_dataset = concatenate_datasets([amazon_validation_dataset, google_play_validation_dataset])
+combined_train_dataset = concatenate_datasets([
+    amazon_train_dataset, 
+    google_play_train_dataset,
+    yelp_train_dataset,
+    helpfulness_train_dataset,
+    drag_train_dataset
+])
+combined_validation_dataset = concatenate_datasets([
+    amazon_validation_dataset, 
+    google_play_validation_dataset,
+    yelp_validation_dataset,
+    helpfulness_validation_dataset,
+    drag_validation_dataset
+])
 print("データセットの結合が完了しました。\n")
 
 print(f"訓練データの数: {len(combined_train_dataset)}")
